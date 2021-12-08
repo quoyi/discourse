@@ -375,8 +375,9 @@ Discourse::Application.routes.draw do
     post "session/email-login/:token" => "session#email_login"
     get "session/otp/:token" => "session#one_time_password", constraints: { token: /[0-9a-f]+/ }
     post "session/otp/:token" => "session#one_time_password", constraints: { token: /[0-9a-f]+/ }
-    get "session/confirm-2fa" => "session#confirm_2fa_get"
-    post "session/confirm-2fa" => "session#confirm_2fa_post"
+    get "session/confirm-2fa" => "session#confirm_2fa_page"
+    post "session/confirm-2fa" => "session#confirm_2fa"
+    get "session/user-2fa-settings" => "session#user_2fa_settings", constraints: { format: :json }
     get "composer_messages" => "composer_messages#index"
 
     resources :static

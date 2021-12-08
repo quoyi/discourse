@@ -424,11 +424,24 @@ class SessionController < ApplicationController
     render layout: 'no_ember', locals: { hide_auth_buttons: true }
   end
 
-  def confirm_2fa_get
+  def confirm_2fa_page
   end
 
-  def confirm_2fa_post
+  def confirm_2fa
     raise Discourse::NotFound if !current_user
+  end
+
+  def user_2fa_settings
+    raise Discourse::NotFound if !current_user
+    user = current_user
+    render json: {
+      is_developer: UsernameCheckerService.is_developer?(user.email),
+      admin: user.admin?,
+      second_factor_required: user.totp_enabled?,
+      security_key_required: user.security_keys_enabled?,
+      backup_enabled: user.backup_codes_enabled?,
+      multiple_second_factor_methods: user.has_multiple_second_factor_methods?
+    }
   end
 
   def forgot_password
