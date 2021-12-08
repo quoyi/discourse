@@ -4,6 +4,14 @@ class ReviewableHistory < ActiveRecord::Base
   belongs_to :reviewable
   belongs_to :created_by, class_name: 'User'
 
+  enum status: {
+    pending: 0,
+    approved: 1,
+    rejected: 2,
+    ignored: 3,
+    deleted: 4
+  }
+
   def self.types
     @types ||= Enum.new(
       created: 0,

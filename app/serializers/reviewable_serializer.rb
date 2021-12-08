@@ -31,6 +31,9 @@ class ReviewableSerializer < ApplicationSerializer
   # Used to keep track of our payload attributes
   class_attribute :_payload_for_serialization
 
+  delegate :status_for_database, to: :object, private: true
+  alias status status_for_database
+
   def bundled_actions
     args = {}
     args[:claimed_by] = claimed_by if @options[:claimed_topics]

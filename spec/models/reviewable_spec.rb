@@ -292,8 +292,8 @@ RSpec.describe Reviewable, type: :model do
 
       expect { PostActionCreator.spam(Fabricate(:user), post) }
         .to change { reviewable.reload.status }
-        .from(Reviewable.statuses[:rejected])
-        .to(Reviewable.statuses[:pending])
+        .from("rejected")
+        .to("pending")
         .and change { Jobs::NotifyReviewable.jobs.size }
         .by(1)
     end

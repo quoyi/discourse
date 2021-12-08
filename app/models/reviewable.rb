@@ -25,6 +25,14 @@ class Reviewable < ActiveRecord::Base
   has_many :reviewable_histories
   has_many :reviewable_scores, -> { order(created_at: :desc) }
 
+  enum status: {
+    pending: 0,
+    approved: 1,
+    rejected: 2,
+    ignored: 3,
+    deleted: 4
+  }
+
   after_create do
     log_history(:created, created_by)
   end
@@ -61,26 +69,10 @@ class Reviewable < ActiveRecord::Base
     )
   end
 
-  def self.statuses
-    @statuses ||= Enum.new(
-      pending: 0,
-      approved: 1,
-      rejected: 2,
-      ignored: 3,
-      deleted: 4
-    )
-  end
-
   # This number comes from looking at forums in the wild and what numbers work.
   # As the site accumulates real data it'll be based on the site activity instead.
   def self.typical_sensitivity
     12.5
-  end
-
-  # Generate `pending?`, `rejected?`, etc helper methods
-  statuses.each do |name, id|
-    define_method("#{name}?") { status == id }
-    singleton_class.define_method(name) { where(status: id) }
   end
 
   def self.default_visible
@@ -382,7 +374,7 @@ class Reviewable < ActiveRecord::Base
   def transition_to(status_symbol, performed_by)
     was_pending = pending?
 
-    self.status = Reviewable.statuses[status_symbol]
+    self.status = status_symbol
     save!
 
     log_history(:transitioned, performed_by)
@@ -496,7 +488,7 @@ class Reviewable < ActiveRecord::Base
           SELECT reviewable_id
           FROM reviewable_histories
           WHERE reviewable_history_type = #{ReviewableHistory.types[:transitioned]} AND
-          status <> #{Reviewable.statuses[:pending]} AND created_by_id = #{reviewed_by_id}
+          status <> #{statuses[:pending]} AND created_by_id = #{reviewed_by_id}
         ) AS rh ON rh.reviewable_id = reviewables.id
       SQL
       )
@@ -634,8 +626,8 @@ class Reviewable < ActiveRecord::Base
     DB.query(
       sql,
       topic_id: topic_id,
-      pending: Reviewable.statuses[:pending],
-      approved: Reviewable.statuses[:approved]
+      pending: self.class.statuses[:pending],
+      approved: self.class.statuses[:approved]
     )
 
     self.score = result[0].score

@@ -17,7 +17,7 @@ RSpec.describe ReviewableHistory, type: :model do
     expect(history.size).to eq(3)
 
     expect(history[0].reviewable_history_type).to eq(ReviewableHistory.types[:created])
-    expect(history[0].status).to eq(Reviewable.statuses[:pending])
+    expect(history[0].status).to eq("pending")
     expect(history[0].created_by).to eq(admin)
   end
 
@@ -29,11 +29,11 @@ RSpec.describe ReviewableHistory, type: :model do
     history = reviewable.history
     expect(history.size).to eq(3)
     expect(history[1].reviewable_history_type).to eq(ReviewableHistory.types[:transitioned])
-    expect(history[1].status).to eq(Reviewable.statuses[:approved])
+    expect(history[1].status).to eq("approved")
     expect(history[1].created_by).to eq(moderator)
 
     expect(history[2].reviewable_history_type).to eq(ReviewableHistory.types[:transitioned])
-    expect(history[2].status).to eq(Reviewable.statuses[:pending])
+    expect(history[2].status).to eq("pending")
     expect(history[2].created_by).to eq(admin)
   end
 
