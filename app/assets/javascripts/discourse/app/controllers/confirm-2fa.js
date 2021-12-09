@@ -15,6 +15,7 @@ export default Controller.extend({
   BACKUP_CODE: SECOND_FACTOR_METHODS.BACKUP_CODE,
 
   userSelectedMethod: null,
+  errorMessage: null,
 
   totpEnabled: readOnly("model.totp_enabled"),
   securityKeysEnabled: readOnly("model.security_keys_enabled"),
@@ -28,12 +29,6 @@ export default Controller.extend({
   showBackupCodesForm: equal(
     "shownSecondFactorMethod",
     SECOND_FACTOR_METHODS.BACKUP_CODE
-  ),
-
-  hasAlternatives: or(
-    "isTotpAnAlternative",
-    "isSecurityKeyAnAlternative",
-    "isBackupCodesAnAlternative"
   ),
 
   @discourseComputed(
@@ -63,52 +58,41 @@ export default Controller.extend({
     }
   },
 
-  @discourseComputed("shownSecondFactorMethod", "totpEnabled")
-  isTotpAnAlternative(shownSecondFactorMethod, totpEnabled) {
-    return (
-      totpEnabled && shownSecondFactorMethod !== SECOND_FACTOR_METHODS.TOTP
-    );
-  },
-
-  @discourseComputed("shownSecondFactorMethod", "securityKeysEnabled")
-  isSecurityKeyAnAlternative(shownSecondFactorMethod, securityKeysEnabled) {
-    return (
-      securityKeysEnabled &&
-      shownSecondFactorMethod !== SECOND_FACTOR_METHODS.SECURITY_KEY
-    );
-  },
-
-  @discourseComputed("shownSecondFactorMethod", "backupCodesEnabled")
-  isBackupCodesAnAlternative(shownSecondFactorMethod, backupCodesEnabled) {
-    return (
-      backupCodesEnabled &&
-      shownSecondFactorMethod !== SECOND_FACTOR_METHODS.BACKUP_CODE
-    );
-  },
-
   @discourseComputed(
     "shownSecondFactorMethod",
     "securityKeysEnabled",
     "totpEnabled",
     "backupCodesEnabled"
   )
-  alternativeSecondFactorMethods(
+  alternativeMethods(
     shownSecondFactorMethod,
     securityKeysEnabled,
     totpEnabled,
     backupCodesEnabled
   ) {
-    const alternatives = [];
-    if (totpEnabled) {
-      alternatives.push(SECOND_FACTOR_METHODS.TOTP);
+    const alts = [];
+    if (securityKeysEnabled && shownSecondFactorMethod != this.SECURITY_KEY) {
+      alts.push({
+        id: this.SECURITY_KEY,
+        translationKey: "login.second_factor_toggle.security_key",
+      });
     }
-    if (securityKeysEnabled) {
-      alternatives.push(SECOND_FACTOR_METHODS.SECOND_FACTOR_METHODS);
+
+    if (totpEnabled && shownSecondFactorMethod != this.TOTP) {
+      alts.push({
+        id: this.TOTP,
+        translationKey: "login.second_factor_toggle.totp",
+      });
     }
-    if (backupCodesEnabled) {
-      alternatives.push(SECOND_FACTOR_METHODS.BACKUP_CODE);
+
+    if (backupCodesEnabled && shownSecondFactorMethod != this.BACKUP_CODE) {
+      alts.push({
+        id: this.BACKUP_CODE,
+        translationKey: "login.second_factor_toggle.backup_code",
+      });
     }
-    return alternatives.filter((alt) => alt !== shownSecondFactorMethod);
+
+    return alts;
   },
 
   @discourseComputed("shownSecondFactorMethod")
@@ -135,20 +119,19 @@ export default Controller.extend({
     }
   },
 
-  securityKeyRequired: alias("model.security_key_required"),
-  backupEnabled: alias("model.backup_enabled"),
-  otherMethodAllowed: readOnly("model.multiple_second_factor_methods"),
+  verifySecondFactor(data) {
+    return ajax("/session/confirm-2fa", {
+      type: "POST",
+      data: {
+        ...data,
+        second_factor_method: this.shownSecondFactorMethod,
+      },
+    });
+  },
 
-  securityKeyOrSecondFactorRequired: or(
-    "model.second_factor_required",
-    "model.security_key_required"
-  ),
-
-  @discourseComputed("model.security_key_required")
-  secondFactorMethod(security_key_required) {
-    return security_key_required
-      ? SECOND_FACTOR_METHODS.SECURITY_KEY
-      : SECOND_FACTOR_METHODS.TOTP;
+  @action
+  onTokenInput() {
+    console.log(...arguments);
   },
 
   @action
@@ -157,29 +140,15 @@ export default Controller.extend({
   },
 
   @action
-  submit() {
-    ajax("/session/confirm-2fa", {
-      type: "POST",
-      data: {
-        second_factor_token: "1",
-      },
-    });
-  },
-
-  @action
   authenticateSecurityKey() {
     getWebauthnCredential(
       this.model.challenge,
       this.model.allowed_credential_ids,
       (credentialData) => {
-        this.set("securityKeyCredential", credentialData);
-        this.send("submit");
+        this.verifySecondFactor({ second_factor_token: credentialData });
       },
       (errorMessage) => {
-        this.setProperties({
-          securityKeyRequired: true,
-          errorMessage,
-        });
+        this.set("errorMessage", errorMessage);
       }
     );
   },

@@ -1969,6 +1969,7 @@ en:
       second_factor_toggle:
         totp: "Use an authenticator app instead"
         backup_code: "Use a backup code instead"
+        security_key: "Use a security key instead"
     invites:
       accept_title: "Invitation"
       emoji: "envelope emoji"
