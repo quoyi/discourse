@@ -61,10 +61,8 @@ protected
   def who_did(status)
     object.
       reviewable_histories.
-      where(
-        reviewable_history_type: ReviewableHistory.types[:transitioned],
-        status: Reviewable.statuses[status]
-      ).
+      transitioned.
+      public_send(status).
       order(:created_at)
       .last&.created_by_id
   end

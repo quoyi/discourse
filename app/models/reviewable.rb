@@ -197,7 +197,7 @@ class Reviewable < ActiveRecord::Base
 
     rs = reviewable_scores.new(
       user: user,
-      status: ReviewableScore.statuses[:pending],
+      status: :pending,
       reviewable_score_type: reviewable_score_type,
       score: sub_total,
       user_accuracy_bonus: user_accuracy_bonus,
@@ -268,7 +268,7 @@ class Reviewable < ActiveRecord::Base
 
   def log_history(reviewable_history_type, performed_by, edited: nil)
     reviewable_histories.create!(
-      reviewable_history_type: ReviewableHistory.types[reviewable_history_type],
+      reviewable_history_type: reviewable_history_type,
       status: status,
       created_by: performed_by,
       edited: edited
@@ -372,8 +372,6 @@ class Reviewable < ActiveRecord::Base
   end
 
   def transition_to(status_symbol, performed_by)
-    was_pending = pending?
-
     self.status = status_symbol
     save!
 
@@ -388,7 +386,7 @@ class Reviewable < ActiveRecord::Base
       )
     end
 
-    was_pending
+    status_previously_changed?(from: "pending")
   end
 
   def post_options

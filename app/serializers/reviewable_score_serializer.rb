@@ -21,6 +21,9 @@ class ReviewableScoreSerializer < ApplicationSerializer
   has_one :reviewable_conversation, serializer: ReviewableConversationSerializer
   has_one :reviewed_by, serializer: BasicUserSerializer, root: 'users'
 
+  delegate :status_for_database, to: :object, private: true
+  alias status status_for_database
+
   def agree_stats
     {
       agreed: user.user_stat.flags_agreed,

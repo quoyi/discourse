@@ -12,16 +12,14 @@ class ReviewableHistory < ActiveRecord::Base
     deleted: 4
   }
 
-  def self.types
-    @types ||= Enum.new(
-      created: 0,
-      transitioned: 1,
-      edited: 2,
-      claimed: 3,
-      unclaimed: 4
-    )
-  end
-
+  alias_attribute :type, :reviewable_history_type
+  enum type: {
+    created: 0,
+    transitioned: 1,
+    edited: 2,
+    claimed: 3,
+    unclaimed: 4
+  }
 end
 
 # == Schema Information
