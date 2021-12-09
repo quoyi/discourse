@@ -6,6 +6,8 @@ class SessionController < ApplicationController
   skip_before_action :redirect_to_login_if_required
   skip_before_action :preload_json, :check_xhr, only: %i(sso sso_login sso_provider destroy one_time_password)
 
+  skip_before_action :check_xhr, only: %i(confirm_2fa_show)
+
   ACTIVATE_USER_KEY = "activate_user"
 
   def csrf
@@ -424,24 +426,31 @@ class SessionController < ApplicationController
     render layout: 'no_ember', locals: { hide_auth_buttons: true }
   end
 
-  def confirm_2fa_page
+  def confirm_2fa_show
+    user = current_user
+    raise Discourse::NotFound if !user
+    json = {
+      totp_enabled: user.totp_enabled?,
+      backup_enabled: user.backup_codes_enabled?,
+      multiple_second_factor_methods: user.has_multiple_second_factor_methods?
+    }
+    if user.security_keys_enabled?
+      Webauthn.stage_challenge(user, secure_session)
+      json.merge!(Webauthn.allowed_credentials(user, secure_session))
+      json[:security_keys_enabled] = true
+    end
+    store_preloaded("user_2fa_settings", MultiJson.dump(json))
+    raise ApplicationController::RenderEmpty.new
   end
 
   def confirm_2fa
     raise Discourse::NotFound if !current_user
-  end
-
-  def user_2fa_settings
-    raise Discourse::NotFound if !current_user
-    user = current_user
-    render json: {
-      is_developer: UsernameCheckerService.is_developer?(user.email),
-      admin: user.admin?,
-      second_factor_required: user.totp_enabled?,
-      security_key_required: user.security_keys_enabled?,
-      backup_enabled: user.backup_codes_enabled?,
-      multiple_second_factor_methods: user.has_multiple_second_factor_methods?
-    }
+    second_factor_authentication_result = current_user.authenticate_second_factor(params, secure_session)
+    if second_factor_authentication_result.ok
+      render json: { success: true }, status: 200
+    else
+      render json: { success: false }, status: 400
+    end
   end
 
   def forgot_password

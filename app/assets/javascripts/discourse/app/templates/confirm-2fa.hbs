@@ -1,27 +1,74 @@
-{{#if securityKeyOrSecondFactorRequired}}
-  {{#if errorMessage}}
-    <div class="alert alert-error">{{errorMessage}}</div>
-    <br>
-  {{/if}}
-  {{#if securityKeyRequired}}
-    {{#security-key-form
-      allowedCredentialIds=model.allowed_credential_ids
-      challenge=model.security_key_challenge
-      showSecurityKey=model.security_key_required
-      showSecondFactor=false
-      secondFactorMethod=secondFactorMethod
-      otherMethodAllowed=otherMethodAllowed
-      action=(action "authenticateSecurityKey")}}
-    {{/security-key-form}}
-  {{else}}
-    {{#second-factor-form
-      secondFactorMethod=secondFactorMethod
-      secondFactorToken=secondFactorToken
-      backupEnabled=backupEnabled
-      isLogin=false}}
-      {{second-factor-input value=secondFactorToken inputId="second-factor" secondFactorMethod=secondFactorMethod backupEnabled=backupEnabled}}
-    {{/second-factor-form}}
-  {{/if}}
-  {{#unless securityKeyRequired }}
-    {{d-button action=(action "submit") class="btn-primary" label="submit" type="submit"}}
-  {{/unless}}
+<h3>{{secondFactorTitle}}</h3>
+<p>{{secondFactorDescription}}</p>
+{{#if showSecurityKeyForm}}
+  <div id="security-key">
+    {{d-button
+        action=action
+        icon="key"
+        id="security-key-authenticate-button"
+        label="login.security_key_authenticate"
+        type="button"
+        class="btn btn-large btn-primary"}}
+  </div>
+{{else if (or showTotpForm showBackupCodesForm)}}
+  <div id="second-factor">
+    {{second-factor-input
+      value=secondFactorToken
+      secondFactorMethod=shownSecondFactorMethod
+    }}
+  </div>
+{{/if}}
+
+{{#if hasAlternatives}}
+  <p><span>
+    {{#if isTotpAnAlternative}}
+      <a href="" class="toggle-second-factor-method" {{action "useAnotherMethod" TOTP}}>
+        {{i18n "login.security_key_alternative"}}
+      </a>
+    {{/if}}
+
+    {{#if isSecurityKeyAnAlternative}}
+      <a href="" class="toggle-second-factor-method" {{action "useAnotherMethod" SECURITY_KEY}}>
+        {{i18n "login.security_key_alternative"}}
+      </a>
+    {{/if}}
+
+    {{#if isBackupCodesAnAlternative}}
+      <a href="" class="toggle-second-factor-method" {{action "useAnotherMethod" BACKUP_CODE}}>
+        {{i18n "login.security_key_alternative"}}
+      </a>
+    {{/if}}
+  </span></p>
+{{/if}}
+
+{{!--
+{{#if showToggleMethodLink}}
+  <p>
+    <a href="" class="toggle-second-factor-method" {{action "toggleSecondFactorMethod"}}>{{ i18n linkText }}</a>
+  </p>
+{{/if}}
+
+
+{{#if securityKeyRequired}}
+  {{#security-key-form
+    allowedCredentialIds=model.allowed_credential_ids
+    challenge=model.security_key_challenge
+    showSecurityKey=model.security_key_required
+    showSecondFactor=false
+    secondFactorMethod=secondFactorMethod
+    otherMethodAllowed=otherMethodAllowed
+    action=(action "authenticateSecurityKey")}}
+  {{/security-key-form}}
+{{else}}
+  {{#second-factor-form
+    secondFactorMethod=secondFactorMethod
+    secondFactorToken=secondFactorToken
+    backupEnabled=backupEnabled
+    isLogin=false}}
+    {{second-factor-input value=secondFactorToken inputId="second-factor" secondFactorMethod=secondFactorMethod backupEnabled=backupEnabled}}
+  {{/second-factor-form}}
+{{/if}}
+{{#unless securityKeyRequired}}
+  {{d-button action=(action "submit") class="btn-primary" label="submit" type="submit"}}
+{{/unless}}
+--}}

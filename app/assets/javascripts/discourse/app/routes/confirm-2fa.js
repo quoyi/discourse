@@ -1,8 +1,8 @@
 import DiscourseRoute from "discourse/routes/discourse";
-import { ajax } from "discourse/lib/ajax";
+import PreloadStore from "discourse/lib/preload-store";
 
 export default DiscourseRoute.extend({
   model() {
-    return ajax("/session/user-2fa-settings.json")
+    return PreloadStore.getAndRemove("user_2fa_settings");
   },
 });
