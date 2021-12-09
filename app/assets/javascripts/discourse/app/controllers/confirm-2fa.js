@@ -11,15 +11,16 @@ import { getWebauthnCredential } from "discourse/lib/webauthn";
 
 export default Controller.extend({
   TOTP: SECOND_FACTOR_METHODS.TOTP,
-  SECURITY_KEY: SECOND_FACTOR_METHODS.SECURITY_KEY,
   BACKUP_CODE: SECOND_FACTOR_METHODS.BACKUP_CODE,
+  SECURITY_KEY: SECOND_FACTOR_METHODS.SECURITY_KEY,
 
-  userSelectedMethod: null,
   errorMessage: null,
+  secondFactorToken: null,
+  userSelectedMethod: null,
 
   totpEnabled: readOnly("model.totp_enabled"),
-  securityKeysEnabled: readOnly("model.security_keys_enabled"),
   backupCodesEnabled: readOnly("model.backup_enabled"),
+  securityKeysEnabled: readOnly("model.security_keys_enabled"),
 
   showTotpForm: equal("shownSecondFactorMethod", SECOND_FACTOR_METHODS.TOTP),
   showSecurityKeyForm: equal(
@@ -126,12 +127,19 @@ export default Controller.extend({
         ...data,
         second_factor_method: this.shownSecondFactorMethod,
       },
-    });
+    })
+      .then((repsonse) => {
+        this.set("errorMessage", null);
+      })
+      .catch((err, defaultMessage) => {
+        const error = extractError(err, defaultMessage);
+        this.set("errorMessage", error);
+      });
   },
 
   @action
-  onTokenInput() {
-    console.log(...arguments);
+  onTokenInput(event) {
+    this.set("secondFactorToken", event.target.value);
   },
 
   @action
@@ -151,5 +159,10 @@ export default Controller.extend({
         this.set("errorMessage", errorMessage);
       }
     );
+  },
+
+  @action
+  authenticateToken() {
+    this.verifySecondFactor({ second_factor_token: this.secondFactorToken });
   },
 });

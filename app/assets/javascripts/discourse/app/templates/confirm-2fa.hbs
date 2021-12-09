@@ -1,23 +1,33 @@
+{{#if errorMessage}}
+  <div class="alert alert-error">{{errorMessage}}</div>
+{{/if}}
 <h3>{{secondFactorTitle}}</h3>
 <p>{{secondFactorDescription}}</p>
 {{#if showSecurityKeyForm}}
   <div id="security-key">
     {{d-button
-        action=action
-        icon="key"
-        id="security-key-authenticate-button"
-        label="login.security_key_authenticate"
-        type="button"
-        class="btn btn-large btn-primary"}}
+      action=(action "authenticateSecurityKey")
+      icon="key"
+      id="security-key-authenticate-button"
+      label="login.security_key_authenticate"
+      type="button"
+      class="btn btn-large btn-primary"
+    }}
   </div>
 {{else if (or showTotpForm showBackupCodesForm)}}
-  <div id="second-factor">
+  <form>
     {{second-factor-input
       value=secondFactorToken
       secondFactorMethod=shownSecondFactorMethod
       onTokenInput=(action "onTokenInput")
     }}
-  </div>
+    {{d-button
+      action=(action "authenticateToken")
+      class="btn-primary"
+      label="submit"
+      type="submit"
+    }}
+  </form>
 {{/if}}
 
 {{#if alternativeMethods.length}}

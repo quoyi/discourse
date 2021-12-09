@@ -449,7 +449,7 @@ class SessionController < ApplicationController
     if second_factor_authentication_result.ok
       render json: { success: true }, status: 200
     else
-      render json: { success: false }, status: 400
+      render json: failed_json.merge(second_factor_authentication_result.to_h), status: 400
     end
   end
 

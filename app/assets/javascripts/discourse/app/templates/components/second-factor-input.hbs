@@ -1,4 +1,5 @@
-{{text-field value=value
+{{text-field
+    value=value
     type=type
     pattern=pattern
     maxlength=maxlength
@@ -7,5 +8,5 @@
     autocorrect="off"
     autocapitalize="off"
     autofocus="autofocus"
-    onChange=(action onTokenInput)
+    input=(action "onInput")
     placeholder=placeholder}}
